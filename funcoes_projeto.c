@@ -179,3 +179,31 @@ void exibir_estatisticas(Simulador *sim) {
     printf("Algoritmo utilizado: %s\n", sim->algoritmo == 0 ? "FIFO" : "Random");
 }
 
+// Acessa a memória (traduz endereço e exibe estado da memória)
+int acessar_memoria(Simulador *sim, int pid, int endereco_virtual) {
+    int endereco_fisico = traduzir_endereco(sim, pid, endereco_virtual);
+    if (endereco_fisico != -1) exibir_memoria_fisica(sim);
+    return endereco_fisico;
+}
+
+// Executa uma simulação completa
+void executar_simulacao(Simulador *sim, int algoritmo) {
+    sim->algoritmo = algoritmo;
+    printf("Tamanho da página: %d bytes\n", sim->tamanho_pagina);
+    printf("Tamanho da memória física: %d bytes\n", sim->tamanho_memoria_fisica);
+    printf("Número de frames: %d\n", sim->memoria.num_frames);
+    printf("Algoritmo de substituição de páginas: %s\n\n", sim->algoritmo == 0 ? "FIFO" : "Random");
+
+    int acessos[][2] = {
+    {2, 2000}, {1, 1111}, {1, 4444}, {3, 3000}, {3, 5000},
+    {1, 1111}, {2, 2000}, {3, 3000}, {1, 4444}, {1, 1111}
+    };
+
+    int num_acessos = sizeof(acessos) / sizeof(acessos[0]);
+
+    for (int i = 0; i < num_acessos; i++) {
+        acessar_memoria(sim, acessos[i][0], acessos[i][1]);
+    }
+
+    exibir_estatisticas(sim);
+}
