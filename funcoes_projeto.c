@@ -59,3 +59,45 @@ void extrair_pagina_deslocamento(Simulador *sim, int endereco_virtual, int *pagi
     *deslocamento = endereco_virtual % sim->tamanho_pagina;
 }
 
+// Verifica se a página está presente na memória
+int verificar_pagina(Simulador *sim, int pid, int pagina) {
+    Processo *proc = buscar_processo(sim, pid);
+    if (!proc || pagina >= proc->num_paginas) return -1;
+    return proc->tabela_paginas[pagina].presente;
+}
+
+// Algoritmo FIFO para substituição de página
+int substituir_pagina_fifo(Simulador *sim) {
+    int oldest_frame = 0, min_tempo = sim->memoria.tempo_carga[0];
+    for (int i = 1; i < sim->memoria.num_frames; i++) {
+        if (sim->memoria.tempo_carga[i] < min_tempo) {
+            min_tempo = sim->memoria.tempo_carga[i];
+            oldest_frame = i;
+        }
+    }
+    if (sim->memoria.frames[oldest_frame] != -1) {
+        int old_pid = sim->memoria.frames[oldest_frame] >> 16;
+        int old_page = sim->memoria.frames[oldest_frame] & 0xFFFF;
+        Processo *proc = buscar_processo(sim, old_pid);
+        if (proc) {
+            proc->tabela_paginas[old_page].presente = 0;
+            proc->tabela_paginas[old_page].frame = -1;
+        }
+    }
+    return oldest_frame;
+}
+
+// Algoritmo Random para substituição de página
+int substituir_pagina_random(Simulador *sim) {
+    int frame = rand() % sim->memoria.num_frames;
+    if (sim->memoria.frames[frame] != -1) {
+        int old_pid = sim->memoria.frames[frame] >> 16;
+        int old_page = sim->memoria.frames[frame] & 0xFFFF;
+        Processo *proc = buscar_processo(sim, old_pid);
+        if (proc) {
+            proc->tabela_paginas[old_page].presente = 0;
+            proc->tabela_paginas[old_page].frame = -1;
+        }
+    }
+    return frame;
+}
